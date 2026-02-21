@@ -41,7 +41,7 @@ const createPrice = (amount: number): Price => {
 }
 
 export function exercise1_PrimitivePrice() {
-	// Without domain types, price is just a number
+	// Without domain types - price is just a number
 	type MenuItem = {
 		name: string
 		price: Price // Could be negative! Could be a huge number!
