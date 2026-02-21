@@ -77,7 +77,7 @@ export function exercise4_BusinessRuleViolation() {
     // Negative guests — blocked at runtime
     try {
         const table = Table.create(3, 6)
-        table.seatGuests(-2) // throws — negative guests
+        table.seatGuests(-2) // throws: negative guests
     } catch (error: any) {
         logError(4, "Negative guest count - impossible in real world", {
             issue: error.message,
