@@ -73,7 +73,7 @@ export function exercise8_EmailValidation() {
         }
     }
 
-    // Valid customer — no errors
+    // Valid customer - no errors
     const validCustomer: Customer = {
         name: "Alice",
         email: parseEmail("alice@example.com"),
