@@ -31,43 +31,56 @@ import { logError } from "./logger.js"
 // enforcement (Repository).
 // ============================================================================
 
+type OrderId = string & { readonly __brand: unique symbol }
+
+const createOrderId = (raw: string): OrderId => {
+    if (!/^ORD-\d{5,}$/.test(raw))
+        throw new Error(`OrderId must match ORD-XXXXX format. Received: "${raw}"`)
+    return raw as OrderId
+}
+
+const generateOrderId = (): OrderId => {
+    return `ORD-${Date.now()}${Math.random().toString(36).slice(2, 7)}` as OrderId
+}
+
+// Repository enforces uniqueness
+class OrderRepository {
+    private ids = new Set<string>()
+
+    register(id: OrderId): void {
+        if (this.ids.has(id))
+            throw new Error(`Duplicate OrderId detected: ${id}`)
+        this.ids.add(id)
+    }
+}
+
 export function exercise5_IdentityCrisis() {
-	type Order = {
-		orderId: string // Just a string - could be anything!
-		customerName: string
-		total: number
-	}
+    type Order = {
+        orderId: OrderId
+        customerName: string
+        total: number
+    }
 
-	// TODO: Replace `string` with an OrderId branded type.
-	// Use a factory function that enforces a consistent format.
-	// Consider who is responsible for uniqueness (hint: Repository pattern).
+    const repo = new OrderRepository()
 
-	// What makes a valid order ID? Nothing enforced!
-	const orders: Order[] = [
-		{
-			orderId: "", // Silent bug! Empty ID
-			customerName: "Alice",
-			total: 25,
-		},
-		{
-			orderId: "12345", // Is this valid?
-			customerName: "Bob",
-			total: 30,
-		},
-		{
-			orderId: "12345", // Silent bug! Duplicate ID
-			customerName: "Charlie",
-			total: 15,
-		},
-		{
-			orderId: "not-a-number", // Silent bug! Inconsistent format
-			customerName: "Diana",
-			total: 20,
-		},
-	]
+    const invalidIds = ["", "12345", "12345", "not-a-number"]
 
-	logError(5, "Order ID chaos - duplicates, empty, inconsistent formats", {
-		orders,
-		issue: "Order IDs have no enforced format or uniqueness!",
-	})
+    for (const raw of invalidIds) {
+        try {
+            const orderId = createOrderId(raw)
+            repo.register(orderId)
+        } catch (error: any) {
+            logError(5, "Invalid Order ID rejected", { raw, issue: error.message })
+        }
+    }
+
+    // Valid orders with generated IDs
+    const orders: Order[] = [
+        { orderId: generateOrderId(), customerName: "Alice", total: 25 },
+        { orderId: generateOrderId(), customerName: "Bob", total: 30 },
+    ]
+
+    for (const order of orders) {
+        repo.register(order.orderId)
+    }
 }
