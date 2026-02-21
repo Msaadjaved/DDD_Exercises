@@ -42,40 +42,44 @@ function createQuantity(n: number): Quantity {
 }
 
 export function exercise2_PrimitiveQuantity() {
-	type Order = {
-		itemName: string
-		quantity: a // Could be 0, negative, or absurdly high!
-		pricePerUnit: number
-	}
+    type Order = {
+        itemName: string
+        quantity: Quantity
+        pricePerUnit: number
+    }
 
-	const order: Order = {
-		itemName: "Pizza",
-		quantity: createQuantity(-3), // Silent bug! Negative quantity
-		pricePerUnit: 15,
-	}
+    // Demonstrate rejection of invalid quantities
+    try {
+        const _ : Order = {
+            itemName: "Pizza",
+            quantity: createQuantity(-3),
+            pricePerUnit: 15,
+        }
+    } catch (error) {
+        logError(2, "Invalid quantity rejected", {
+            issue: (error as Error).message,
+        })
+    }
 
-	// TODO: Replace `number` with a Quantity branded type.
-	// Both of the bugs below should become impossible:
-	//   quantity: -3       // <-- negative
-	//   quantity: 50000    // <-- exceeds business limit
+    // Valid order works fine
+    const order: Order = {
+        itemName: "Pizza",
+        quantity: createQuantity(2),
+        pricePerUnit: 15,
+    }
+    const total = order.quantity * order.pricePerUnit
+    console.log("Valid order total:", total) // 30
 
-	const total = order.quantity * order.pricePerUnit
-	logError(2, "Negative quantity allowed - restaurant owes customer money?", {
-		order,
-		calculatedTotal: total,
-		issue: "Quantity should be a positive integer!",
-	})
-
-	// Another silent bug - absurd quantity
-	const bulkOrder: Order = {
-		itemName: "Coffee",
-		quantity: 50000, // Silent bug! Unrealistic quantity
-		pricePerUnit: 3,
-	}
-
-	logError(2, "Absurd quantity accepted without validation", {
-		order: bulkOrder,
-		calculatedTotal: bulkOrder.quantity * bulkOrder.pricePerUnit,
-		issue: "Should we really accept an order for 50,000 coffees?",
-	})
+    // Demonstrate rejection of absurd quantity
+    try {
+        const _: Order = {
+            itemName: "Coffee",
+            quantity: createQuantity(50000),
+            pricePerUnit: 3,
+        }
+    } catch (error) {
+        logError(2, "Bulk quantity rejected", {
+            issue: (error as Error).message,
+        })
+    }
 }
