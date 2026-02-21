@@ -42,44 +42,52 @@ import { logError } from "./logger.js"
 // because that question is part of its domain responsibility.
 // ============================================================================
 
+type Hour = number & { readonly __brand: unique symbol }
+
+const createHour = (h: number): Hour => {
+    if (!Number.isInteger(h) || h < 0 || h > 23)
+        throw new Error(`Hour must be 0-23. Received: ${h}`)
+    return h as Hour
+}
+
+class OperatingHours {
+    private constructor(
+        public readonly opens: Hour,
+        public readonly closes: Hour,
+    ) {}
+
+    static create(opens: number, closes: number): OperatingHours {
+        return new OperatingHours(createHour(opens), createHour(closes))
+    }
+
+    isOpenAt(hour: Hour): boolean {
+        if (this.opens <= this.closes) {
+            return hour >= this.opens && hour < this.closes
+        }
+        // Handles midnight crossover
+        return hour >= this.opens || hour < this.closes
+    }
+}
+
 export function exercise6_TemporalLogic() {
-	type Restaurant = {
-		name: string
-		opensAt: number // Hours (0-23)
-		closesAt: number // Hours (0-23)
-	}
+    // Invalid hours — blocked at runtime
+    try {
+        OperatingHours.create(25, -5)
+    } catch (error: any) {
+        logError(6, "Invalid hours accepted without validation", {
+            issue: error.message,
+        })
+    }
 
-	const restaurant: Restaurant = {
-		name: "Joe's Diner",
-		opensAt: 22, // Opens at 10 PM
-		closesAt: 6, // Closes at 6 AM - crosses midnight!
-	}
+    // Valid overnight restaurant — logic now correct
+    const hours = OperatingHours.create(22, 6)
+    const testHour = createHour(2)
+    const isOpen = hours.isOpenAt(testHour)
 
-	// Simple check fails for overnight restaurants
-	const isOpen = (hour: number): boolean => {
-		return hour >= restaurant.opensAt && hour <= restaurant.closesAt
-	}
-
-	// TODO: Replace the raw numbers with an OperatingHours Value Object.
-	// Move the isOpen logic INSIDE the Value Object so it correctly handles
-	// overnight spans and rejects invalid hours at construction time.
-
-	logError(6, "Operating hours logic broken for overnight restaurants", {
-		restaurant,
-		testHour: 2, // 2 AM should be open
-		isOpenCalculated: isOpen(2), // Returns false incorrectly
-		issue: "Simple comparison fails when hours cross midnight!",
-	})
-
-	// Also accepts invalid hours
-	const brokenRestaurant: Restaurant = {
-		name: "Broken Cafe",
-		opensAt: 25, // Silent bug! Invalid hour
-		closesAt: -5, // Silent bug! Invalid hour
-	}
-
-	logError(6, "Invalid hours accepted without validation", {
-		restaurant: brokenRestaurant,
-		issue: "Hours should be 0-23 only!",
-	})
+    // No longer broken — 2 AM correctly returns true
+    if (!isOpen) {
+        logError(6, "Operating hours logic broken for overnight restaurants", {
+            issue: "2 AM should be open for a 10PM-6AM restaurant!",
+        })
+    }
 }
