@@ -57,51 +57,35 @@ const createQuantity = (n: number): Quantity => {
 }
 
 export function exercise2_PrimitiveQuantity() {
-	type Order = {
-		itemName: string
-		quantity: Quantity
-		pricePerUnit: number
-	}
+    type Order = {
+        itemName: string
+        quantity: Quantity
+        pricePerUnit: number
+    }
 
-	try {
-        console.log("Attempting to order -3 Pizzas...")
-        
-        const validQuantity = createQuantity(-3) 
-
+    // Invalid quantities — blocked at runtime, log stays empty
+    try {
         const order: Order = {
             itemName: "Pizza",
-            quantity: validQuantity,
+            quantity: createQuantity(-3),
             pricePerUnit: 15,
         }
-    } catch (error: any) {
-        console.log(`BLOCKED: ${error.message}`)
-    }
+    } catch (_) {}
 
     try {
-        console.log("Attempting to order 50,000 Coffees...")
-        
-        // This will now fail at runtime before the order is created
-        const bulkQuantity = createQuantity(50000)
-
-        const bulkOrder: Order = {
+        const order: Order = {
             itemName: "Coffee",
-            quantity: bulkQuantity,
+            quantity: createQuantity(50000),
             pricePerUnit: 3,
         }
-    } catch (error: any) {
-        console.log(`BLOCKED: ${error.message}`)
+    } catch (_) {}
+
+    // Valid order — no errors, no log entries
+    const validOrder: Order = {
+        itemName: "Coffee",
+        quantity: createQuantity(5),
+        pricePerUnit: 3,
     }
 
-    try {
-        const saneQuantity = createQuantity(5)
-        const validOrder: Order = {
-            itemName: "Coffee",
-            quantity: saneQuantity,
-            pricePerUnit: 3,
-        }
-        const total = validOrder.quantity * validOrder.pricePerUnit
-        console.log(`\nSuccess: Ordered ${validOrder.quantity} ${validOrder.itemName}s. Total: $${total}`)
-    } catch (e) {
-        logError(2, "Valid order failed", e)
-    }
+    const total = validOrder.quantity * validOrder.pricePerUnit
 }
