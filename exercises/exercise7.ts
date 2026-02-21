@@ -44,33 +44,53 @@ import { logError } from "./logger.js"
 // the single representation eliminates dollars-vs-cents ambiguity.
 // ============================================================================
 
+type Currency = "USD" | "EUR" | "GBP"
+
+class Money {
+    private constructor(
+        private readonly cents: number,
+        public readonly currency: Currency,
+    ) {}
+
+    static fromDollars(amount: number, currency: Currency): Money {
+        return new Money(Math.round(amount * 100), currency)
+    }
+
+    static fromCents(cents: number, currency: Currency): Money {
+        if (!Number.isInteger(cents)) throw new Error("Cents must be integer")
+        return new Money(cents, currency)
+    }
+
+    add(other: Money): Money {
+        if (this.currency !== other.currency)
+            throw new Error(`Cannot add different currencies: ${this.currency} and ${other.currency}`)
+        return new Money(this.cents + other.cents, this.currency)
+    }
+
+    format(): string {
+        return `$${(this.cents / 100).toFixed(2)} ${this.currency}`
+    }
+}
+
 export function exercise7_CurrencyConfusion() {
-	type MenuItem = {
-		name: string
-		price: number // In what currency? Cents? Dollars?
-	}
+    type MenuItem = {
+        name: string
+        price: Money
+    }
 
-	const burger: MenuItem = {
-		name: "Burger",
-		price: 12.5, // Is this $12.50 or 12.5 cents?
-	}
+    // Mixed currency — blocked at runtime
+    try {
+        const a = Money.fromDollars(10, "USD")
+        const b = Money.fromDollars(10, "EUR")
+        a.add(b)
+    } catch (error: any) {
+        logError(7, "Cannot add different currencies", { issue: error.message })
+    }
 
-	const pizza: MenuItem = {
-		name: "Pizza",
-		price: 1850, // Is this $18.50 or $1850?
-	}
+    // Valid — canonical cents representation eliminates ambiguity
+    const burger: MenuItem = { name: "Burger", price: Money.fromDollars(12.50, "USD") }
+    const pizza: MenuItem  = { name: "Pizza",  price: Money.fromDollars(18.50, "USD") }
 
-	// TODO: Replace `number` with a Money Value Object.
-	// Force a single canonical representation (e.g., cents) so that
-	// adding burger.price + pizza.price always means the same thing.
-
-	// Calculations produce unexpected results
-	const total = burger.price + pizza.price // 12.5 + 1850 = 1862.5
-	const formattedTotal = `$${total.toFixed(2)}` // $1862.50 ??
-
-	logError(7, "Currency unit confusion leads to calculation errors", {
-		items: [burger, pizza],
-		calculatedTotal: formattedTotal,
-		issue: "Are prices in dollars or cents? TypeScript doesn't know!",
-	})
+    const total = burger.price.add(pizza.price)
+    console.log(`Total: ${total.format()}`) // $31.00 USD
 }
